@@ -43,7 +43,7 @@ def create_ordered_pdf(reference_pdf, ordered_indexes, page_size, page_layout, p
     return generated_pdf
 
 
-def make_booklet(input_file):
+def make_booklet(input_file, sheets_per_signature=1):
     try:
         with open(input_file, 'rb') as readfile:
             input_pdf = PdfReader(readfile)
@@ -53,7 +53,7 @@ def make_booklet(input_file):
             page_layout = [[0, 0], [page_width, 0]]
 
             pdf_length = len(input_pdf.pages)
-            ordered_indexes = get_ordered_indexes(pdf_length, 2)
+            ordered_indexes = get_ordered_indexes(pdf_length, sheets_per_signature)
 
             output_pdf = create_ordered_pdf(input_pdf, ordered_indexes, [page_width * 2, page_height], page_layout, pdf_length)
 
@@ -66,4 +66,4 @@ def make_booklet(input_file):
 
 if __name__ == "__main__":
     input_file = "input.pdf"
-    make_booklet(input_file)
+    make_booklet(input_file, 1)
