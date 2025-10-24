@@ -27,10 +27,10 @@ def get_ordered_indexes(total_pages, sheets_per_signature=1):
     return indexes
 
 
-def create_ordered_pdf(reference_pdf):
+def create_ordered_pdf(reference_pdf, ordered_indexes, page_size, page_layout, pdf_length):
     generated_pdf = PdfWriter()
     for i in range(0, len(ordered_indexes), 2):
-        new_page = PageObject.create_blank_page(width=page_width * 2, height=page_height)
+        new_page = PageObject.create_blank_page(width=page_size[0], height=page_size[1])
         for delta_index, coords in enumerate(page_layout):
             index = i + delta_index
             if index >= len(ordered_indexes):
@@ -46,21 +46,25 @@ def create_ordered_pdf(reference_pdf):
     return generated_pdf
 
 
-try:
-    with open(input_file, 'rb') as readfile:
-        input_pdf = PdfReader(readfile)
+def make_booklet(input_file):
+    try:
+        with open(input_file, 'rb') as readfile:
+            input_pdf = PdfReader(readfile)
 
-        page_width = input_pdf.pages[0].mediabox.width
-        page_height = input_pdf.pages[0].mediabox.height
-        page_layout = [[0, 0], [page_width, 0]]
+            page_width = input_pdf.pages[0].mediabox.width
+            page_height = input_pdf.pages[0].mediabox.height
+            page_layout = [[0, 0], [page_width, 0]]
 
-        pdf_length = len(input_pdf.pages)
-        ordered_indexes = get_ordered_indexes(pdf_length, 2)
+            pdf_length = len(input_pdf.pages)
+            ordered_indexes = get_ordered_indexes(pdf_length, 2)
 
-        output_pdf = create_ordered_pdf(input_pdf)
+            output_pdf = create_ordered_pdf(input_pdf, ordered_indexes, [page_width * 2, page_height], page_layout, pdf_length)
 
-        with open(output_file, "wb") as writefile:
-            output_pdf.write(writefile)
-except FileNotFoundError:
-    print(f"File '{input_file}' not found")
-    
+            with open(output_file, "wb") as writefile:
+                output_pdf.write(writefile)
+    except FileNotFoundError:
+        print(f"File '{input_file}' not found")
+
+
+if __name__ == "__main__":
+    make_booklet(input_file)
