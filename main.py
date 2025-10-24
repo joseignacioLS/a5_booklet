@@ -2,9 +2,6 @@ import math
 
 from pypdf import PdfWriter, PdfReader, PageObject
 
-input_file = "input.pdf"
-output_file = input_file.replace(".pdf", "_print.pdf")
-
 
 def get_ordered_indexes(total_pages, sheets_per_signature=1):
     indexes = []
@@ -46,7 +43,7 @@ def create_ordered_pdf(reference_pdf, ordered_indexes, page_size, page_layout, p
     return generated_pdf
 
 
-def make_booklet(input_file, sheets_per_signature=1):
+def make_booklet(input_file):
     try:
         with open(input_file, 'rb') as readfile:
             input_pdf = PdfReader(readfile)
@@ -56,10 +53,11 @@ def make_booklet(input_file, sheets_per_signature=1):
             page_layout = [[0, 0], [page_width, 0]]
 
             pdf_length = len(input_pdf.pages)
-            ordered_indexes = get_ordered_indexes(pdf_length, sheets_per_signature)
+            ordered_indexes = get_ordered_indexes(pdf_length, 2)
 
             output_pdf = create_ordered_pdf(input_pdf, ordered_indexes, [page_width * 2, page_height], page_layout, pdf_length)
 
+            output_file = input_file.replace(".pdf", "_print.pdf")
             with open(output_file, "wb") as writefile:
                 output_pdf.write(writefile)
     except FileNotFoundError:
@@ -67,4 +65,5 @@ def make_booklet(input_file, sheets_per_signature=1):
 
 
 if __name__ == "__main__":
+    input_file = "input.pdf"
     make_booklet(input_file)
