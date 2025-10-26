@@ -97,19 +97,25 @@ def calculate_extra_blank_pages(total_pages, sheets_per_signature):
     return number_of_signatures, real_pages - total_pages
 
 
-def check_blank_page_addition(total_pages, sheets_per_signature, sheets_limit=None):
+def check_blank_page_addition(total_pages):
     print("Arrangements")
-    max_sheets_per_signature = sheets_limit or math.ceil(total_pages / 8)
-    for i in range(1, max_sheets_per_signature):
-        number_of_signatures, blank_pages = calculate_extra_blank_pages(total_pages, i)
-        print(f"[{'*' if i == sheets_per_signature else ' '}] {i} sheets per signature\t{4 * i} pages per signature"
-              f"\t {number_of_signatures} total signatures"
-              f"\t{blank_pages} extra blank pages")
-    if sheets_per_signature >= max_sheets_per_signature:
+    res = {}
+    sheets_per_signature = 1
+
+    while sheets_per_signature < total_pages:
         number_of_signatures, blank_pages = calculate_extra_blank_pages(total_pages, sheets_per_signature)
-        print(f"[*] {sheets_per_signature} sheets per signature\t{4 * sheets_per_signature} pages per signature"
-              f"\t {number_of_signatures} total signatures"
-              f"\t{blank_pages} extra blank pages")
+        if number_of_signatures in res:
+            if res[number_of_signatures][1] >= blank_pages:
+                res[number_of_signatures] = [sheets_per_signature, blank_pages]
+        else:
+            res[number_of_signatures] = [sheets_per_signature, blank_pages]
+        if number_of_signatures == 1:
+            break
+        sheets_per_signature += 1
+    for entry in res:
+        print(f"{res[entry][0]} sheets per signature\t{4 * res[entry][0]} pages per signature"
+              f"\t {entry} total signatures"
+              f"\t{res[entry][1]} extra blank pages")
 
 
 def make_booklet(
@@ -175,7 +181,7 @@ def test_booklet(input_file):
 
             total_pages = len(input_pdf.pages)
 
-            check_blank_page_addition(total_pages, 0, int(total_pages / 2))
+            check_blank_page_addition(total_pages)
 
     except FileNotFoundError:
         print(f"File '{input_file}' not found")
