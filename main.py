@@ -97,12 +97,12 @@ def calculate_extra_blank_pages(total_pages, sheets_per_signature):
     return number_of_signatures, real_pages - total_pages
 
 
-def check_blank_page_addition(total_pages, sheets_per_signature):
+def check_blank_page_addition(total_pages, sheets_per_signature, sheets_limit=None):
     print("Arrangements")
-    max_sheets_per_signature = math.ceil(total_pages / 8)
+    max_sheets_per_signature = sheets_limit or math.ceil(total_pages / 8)
     for i in range(1, max_sheets_per_signature):
         number_of_signatures, blank_pages = calculate_extra_blank_pages(total_pages, i)
-        print(f"[{"*" if i == sheets_per_signature else " "}] {i} sheets per signature\t{4 * i} pages per signature"
+        print(f"[{'*' if i == sheets_per_signature else ' '}] {i} sheets per signature\t{4 * i} pages per signature"
               f"\t {number_of_signatures} total signatures"
               f"\t{blank_pages} extra blank pages")
     if sheets_per_signature >= max_sheets_per_signature:
@@ -139,8 +139,6 @@ def make_booklet(
 
             total_pages = len(input_pdf.pages)
 
-            check_blank_page_addition(total_pages, sheets_per_signature)
-
             ordered_pages = get_ordered_indexes(
                 total_pages,
                 sheets_per_signature
@@ -166,13 +164,82 @@ def make_booklet(
         print(f"File '{input_file}' not found")
 
 
+def test_booklet(input_file):
+    try:
+        with open(input_file, 'rb') as readfile:
+            try:
+                input_pdf = PdfReader(readfile)
+            except PdfStreamError:
+                print("Invalid Input File")
+                sys.exit()
+
+            total_pages = len(input_pdf.pages)
+
+            check_blank_page_addition(total_pages, 0, int(total_pages / 2))
+
+    except FileNotFoundError:
+        print(f"File '{input_file}' not found")
+
+
+def decode_args(args):
+    res = {}
+    for key, value in [arg.split("=") for arg in args]:
+        res[key] = value
+    return res
+
+
+def handle_args(args):
+    try:
+        mode = args["-mode"]
+        if mode not in ["make", "test", "help"]:
+            raise ValueError
+    except ValueError:
+        mode = "help"
+        print("Available modes: make, test or help\n")
+    except KeyError:
+        mode = "help"
+
+    try:
+        input_file = args["-file"]
+    except KeyError:
+        print("Missing file name argument\n")
+        input_file = ""
+        mode = "help"
+
+    try:
+        input_sheets_per_signature = int(args["-s"])
+        sheets_per_signature = max(input_sheets_per_signature, 1)
+    except KeyError:
+        sheets_per_signature = 1
+    except ValueError:
+        print("Number of sheets per signature should be a number\n")
+        mode = "help"
+
+    return input_file, mode, sheets_per_signature
+
+
 if __name__ == "__main__":
-    if len(sys.argv) < 2:
-        input("Missing file name argument")
-        sys.exit()
-    input_file = sys.argv[1]
-    sheets_per_signature = 1 if len(sys.argv) < 3 else max(1, int(sys.argv[2]))
-    make_booklet(
-        input_file,
-        sheets_per_signature
-    )
+    args = decode_args(sys.argv[1:])
+
+    input_file, mode, sheets_per_signature = handle_args(args)
+
+    if mode == "make":
+        make_booklet(
+            input_file,
+            sheets_per_signature
+        )
+    elif mode == "test":
+        test_booklet(
+            input_file
+        )
+    elif mode == "help":
+        print(f"-mode=<'make'|'test'>\n"
+              f"  make: produce booklet\n"
+              f"  test: check number of signatures based on sheets per signature\n"
+              f"\n"
+              f"-file=<path>\n"
+              f"  path to the file\n"
+              f"\n"
+              f"-s=<number>\n"
+              f"  number of sheets per signature")
+
